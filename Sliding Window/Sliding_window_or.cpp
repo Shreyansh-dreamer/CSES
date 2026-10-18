@@ -1,69 +1,53 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 
-int main(){
-    int n,k;
-    cin>>n>>k;
+vector<unsigned int> seg;
 
-    long long x,a,b,c;
-    cin>>x>>a>>b>>c;
-
-    vector<long long>arr(k);
-    arr[0]=x;
-
-    int cnt[30]={0};
-    long long cur=0,ans=0;
-
-    for(int i=0;i<k;i++){
-        if(i){
-            x=(a*x+b)%c;
-            arr[i]=x;
-        }
-
-        long long z=arr[i];
-
-        while(z){
-            int j=__builtin_ctzll(z);
-            cnt[j]++;
-            cur|=1LL<<j;
-            z-=1LL<<j;
-        }
+void build(vector<unsigned int>& arr,int node,int l,int r){
+    if(l==r){
+        seg[node]=arr[l];
+        return;
     }
 
-    ans^=cur;
+    int mid=(l+r)/2;
+    build(arr,2*node+1,l,mid);
+    build(arr,2*node+2,mid+1,r);
 
-    for(int i=k;i<n;i++){
-        x=(a*x+b)%c;
+    seg[node]=seg[2*node+1]|seg[2*node+2];
+}
 
-        int pos=i%k;
+unsigned int query(int node,int l,int r,int ql,int qr){
+    if(ql<=l&&r<=qr) return seg[node];
+    if(r<ql||l>qr) return 0;
 
-        long long z=arr[pos];
+    int mid=(l+r)/2;
 
-        while(z){
-            int j=__builtin_ctzll(z);
-            cnt[j]--;
+    return query(2*node+1,l,mid,ql,qr)|
+           query(2*node+2,mid+1,r,ql,qr);
+}
 
-            if(cnt[j]==0)
-                cur^=1LL<<j;
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
-            z-=1LL<<j;
-        }
+    int n,k;
+    long long x,a,b,c;
+    cin>>n>>k>>x>>a>>b>>c;
 
-        arr[pos]=x;
+    vector<unsigned int> arr(n);
+    arr[0]=x;
 
-        z=x;
+    for(int i=1;i<n;i++){
+        arr[i]=(a*arr[i-1]+b)%c;
+    }
 
-        while(z){
-            int j=__builtin_ctzll(z);
+    seg.resize(4*n);
+    build(arr,0,0,n-1);
 
-            if(cnt[j]==0)
-                cur|=1LL<<j;
+    unsigned int ans=0;
 
-            cnt[j]++;
-            z-=1LL<<j;
-        }
-
-        ans^=cur;
+    for(int i=0;i+k<=n;i++){
+        ans^=query(0,0,n-1,i,i+k-1);
     }
 
     cout<<ans<<endl;
